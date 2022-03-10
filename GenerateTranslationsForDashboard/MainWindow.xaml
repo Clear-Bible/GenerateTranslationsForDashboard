@@ -1,0 +1,183 @@
+﻿<Window
+    x:Class="GenerateTranslationsForDashboard.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:GenerateTranslationsForDashboard"
+    xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    x:Name="TheWindow"
+    Title="MainWindow"
+    Width="1200"
+    Height="800"
+    Background="{DynamicResource MaterialDesignPaper}"
+    FontFamily="{DynamicResource MaterialDesignFont}"
+    TextElement.FontSize="13"
+    TextElement.FontWeight="Regular"
+    TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+    TextOptions.TextFormattingMode="Ideal"
+    TextOptions.TextRenderingMode="Auto"
+    mc:Ignorable="d">
+
+    <Window.DataContext>
+        <local:MainWindowViewModel />
+    </Window.DataContext>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="50" />
+            <RowDefinition Height="50" />
+            <RowDefinition Height="50" />
+            <RowDefinition Height="3*" />
+            <RowDefinition Height="30" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="30" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition />
+            <ColumnDefinition Width="250" />
+        </Grid.ColumnDefinitions>
+        <StackPanel
+            Grid.Row="0"
+            Grid.ColumnSpan="2"
+            Margin="8"
+            Orientation="Horizontal">
+            <Button
+                Width="350"
+                Command="{Binding SelectTSVCommand}"
+                CommandParameter="">
+                Select GoogleSheets Translation File (*.tsv)
+            </Button>
+            <TextBlock
+                MinWidth="300"
+                MinHeight="25"
+                Margin="10,0,0,0"
+                VerticalAlignment="Center"
+                Text="{Binding TSVfile}" />
+        </StackPanel>
+
+        <StackPanel
+            Grid.Row="1"
+            Grid.ColumnSpan="2"
+            Margin="8"
+            Orientation="Horizontal">
+            <Button
+                Width="350"
+                Command="{Binding SelectStringsDirCommand}"
+                CommandParameter="">
+                Select Dashboard WPF Project's Strings Directory
+            </Button>
+            <TextBlock
+                MinWidth="300"
+                MinHeight="25"
+                Margin="10,0,0,0"
+                VerticalAlignment="Center"
+                Text="{Binding StringsFolderPath}" />
+        </StackPanel>
+        <Button
+            Grid.Row="2"
+            Width="350"
+            Height="25"
+            Command="{Binding GenerateCommand}"
+            CommandParameter=""
+            IsEnabled="{Binding Enabled}">
+            Generate Data from TSV
+        </Button>
+        <Border
+            Grid.Row="3"
+            Margin="5"
+            BorderBrush="{StaticResource BlueVioletMidBrush}"
+            BorderThickness="2"
+            CornerRadius="3">
+
+            <DataGrid
+                AutoGenerateColumns="True"
+                CanUserAddRows="False"
+                CanUserDeleteRows="False"
+                CanUserReorderColumns="False"
+                CanUserResizeColumns="True"
+                CanUserResizeRows="False"
+                CanUserSortColumns="False"
+                ItemsSource="{Binding GridData}"
+                SelectionMode="Single" />
+        </Border>
+        <Border
+            Grid.Row="3"
+            Grid.Column="1"
+            Margin="5"
+            BorderBrush="{StaticResource BlueVioletMidBrush}"
+            BorderThickness="2"
+            CornerRadius="3">
+            <Grid
+                Grid.Column="1"
+                Margin="5"
+                VerticalAlignment="Top">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="20" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <TextBlock Grid.Row="0">Duplicate Keys Found (Correct First):</TextBlock>
+                <ListView
+                    Grid.Row="1"
+                    Foreground="Red"
+                    ItemsSource="{Binding DupList}" />
+            </Grid>
+        </Border>
+
+        <Button
+            Grid.Row="4"
+            Grid.Column="0"
+            Grid.ColumnSpan="2"
+            Width="350"
+            Height="25"
+            Command="{Binding ProcessCommand}"
+            CommandParameter=""
+            IsEnabled="{Binding Enabled}">
+            Populate Resources
+        </Button>
+
+        <Border
+            Grid.Row="5"
+            Grid.ColumnSpan="2"
+            Margin="5"
+            BorderBrush="{StaticResource BlueVioletMidBrush}"
+            BorderThickness="2"
+            CornerRadius="3">
+            <ListView ItemsSource="{Binding ResultList}">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock FontWeight="Bold" Text="{Binding Message}">
+                                <TextBlock.Style>
+                                    <Style TargetType="{x:Type TextBlock}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Message}" Value="Success!">
+                                                <Setter Property="Foreground" Value="Green" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Message}" Value="File not found">
+                                                <Setter Property="Foreground" Value="Red" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <TextBlock Margin="10,0,0,0" Text="{Binding FilePath}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+        </Border>
+
+
+        <Button
+            Grid.Row="6"
+            Grid.Column="0"
+            Grid.ColumnSpan="2"
+            Width="350"
+            Height="25"
+            Command="{Binding CloseCommand}"
+            CommandParameter="{Binding ElementName=TheWindow}">
+            Close
+        </Button>
+    </Grid>
+</Window>
