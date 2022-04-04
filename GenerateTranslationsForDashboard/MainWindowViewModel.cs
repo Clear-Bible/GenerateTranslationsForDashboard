@@ -10,6 +10,8 @@ using System.Linq;
 using System.Resources.NetStandard;
 using System.Windows;
 using System.Windows.Input;
+using System.Xml;
+using System.Xml.Linq;
 
 namespace GenerateTranslationsForDashboard
 {
@@ -177,22 +179,6 @@ namespace GenerateTranslationsForDashboard
 
         #region methods
 
-
-        #endregion
-
-
-        #region inotify
-
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        protected void NotifyPropertyChanged(string info)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(info));
-        }
-
-        #endregion
-
-
         private void CloseApp(object obj)
         {
             if (obj is Window)
@@ -354,32 +340,33 @@ namespace GenerateTranslationsForDashboard
                     break;
                 }
 
+                RemoveAllResources(langFile);
+
                 // https://stackoverflow.com/questions/676312/modifying-resx-file-in-c-sharp
                 // Create a ResXResourceReader for the file items.resx.
                 Hashtable resourceEntries = new Hashtable();
 
-                //Get existing resources
-                ResXResourceReader reader = new ResXResourceReader(langFile);
-                if (reader != null)
-                {
-                    IDictionaryEnumerator id = reader.GetEnumerator();
-                    foreach (DictionaryEntry d in reader)
-                    {
-                        if (d.Value == null)
-                            resourceEntries.Add(d.Key.ToString(), "");
-                        else
-                            resourceEntries.Add(d.Key.ToString(), d.Value.ToString());
-                    }
-                    reader.Close();
-                }
+                ////Get existing resources
+                //ResXResourceReader reader = new ResXResourceReader(langFile);
+                //if (reader != null)
+                //{
+                //    IDictionaryEnumerator id = reader.GetEnumerator();
+                //    foreach (DictionaryEntry d in reader)
+                //    {
+                //        if (d.Value == null)
+                //            resourceEntries.Add(d.Key.ToString(), "");
+                //        else
+                //            resourceEntries.Add(d.Key.ToString(), d.Value.ToString());
+                //    }
+                //    reader.Close();
+                //}
 
                 //Modify resources here...
                 foreach (String key in lang.Keys)
                 {
                     if (!resourceEntries.ContainsKey(key))
                     {
-
-                        String value = lang[key].ToString();
+                        String value = lang[key];
                         if (value == null) value = "";
 
                         resourceEntries.Add(key, value);
@@ -405,5 +392,40 @@ namespace GenerateTranslationsForDashboard
             }
 
         }
+
+        /// <summary>
+        /// Remove all the data from the resource file
+        /// </summary>
+        /// <param name="langFile"></param>
+        private void RemoveAllResources(string langFile)
+        {
+            // remove all the data from the file
+            XmlTextReader reader = new XmlTextReader(langFile);
+            reader.Read();
+            XmlDocument doc = new XmlDocument();
+            doc.Load(reader);
+
+            XmlNodeList lstNode = doc.SelectNodes("root/data");
+            foreach (XmlNode node in lstNode)
+            {
+                node.ParentNode.RemoveChild(node);
+            }
+            reader.Close();
+            doc.Save(langFile);
+        }
+
+        #endregion
+
+
+        #region inotify
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected void NotifyPropertyChanged(string info)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(info));
+        }
+
+        #endregion
     }
 }

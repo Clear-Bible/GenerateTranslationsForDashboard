@@ -127,12 +127,11 @@
         <Button
             Grid.Row="4"
             Grid.Column="0"
-            Grid.ColumnSpan="2"
             Width="350"
             Height="25"
             Command="{Binding ProcessCommand}"
             CommandParameter=""
-            IsEnabled="{Binding Enabled}">
+            IsEnabled="{Binding Enabled}" Margin="425,0,175,3" VerticalAlignment="Bottom">
             Populate Resources
         </Button>
 
