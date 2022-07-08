@@ -7,6 +7,7 @@ using System.Data;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Resources.NetStandard;
 using System.Windows;
 using System.Windows.Input;
@@ -15,14 +16,28 @@ using System.Xml.Linq;
 
 namespace GenerateTranslationsForDashboard
 {
-    public class MainWindowViewModel: INotifyPropertyChanged
+    public class MainWindowViewModel : INotifyPropertyChanged
     {
         #region observable props
 
+        private string _version;
+
+        public string Version
+        {
+            get => _version;
+            set
+            {
+                _version = value;
+                NotifyPropertyChanged("Version");
+            }
+        }
+
+
+
         private string _tSVfile;
-        public string TSVfile 
-        { 
-            get => _tSVfile; 
+        public string TSVfile
+        {
+            get => _tSVfile;
             set
             {
                 _tSVfile = value;
@@ -53,6 +68,19 @@ namespace GenerateTranslationsForDashboard
                 NotifyPropertyChanged("Enabled");
             }
         }
+
+        private bool _processEnabledenabled;
+        public bool ProcessEnabled
+        {
+            get { return _processEnabledenabled; }
+            set
+            {
+                _processEnabledenabled = value;
+                NotifyPropertyChanged("ProcessEnabled");
+            }
+        }
+
+        //ProcessEnabled
 
         private DataView _gridData;
         public DataView GridData
@@ -162,6 +190,10 @@ namespace GenerateTranslationsForDashboard
 
         public MainWindowViewModel()
         {
+            // get the version
+            Version = "Version: " + Assembly.GetExecutingAssembly().GetName().Version?.ToString();
+
+
             // pull in the values from the Settings file
             TSVfile = Properties.Settings.Default.TSVFilePath;
             StringsFolderPath = Properties.Settings.Default.StringsFolderPath;
@@ -271,7 +303,7 @@ namespace GenerateTranslationsForDashboard
                     else
                     {
                         // skip header and empty lines
-                        if (! items[0].ToString().StartsWith(">"))
+                        if (!items[0].ToString().StartsWith(">"))
                         {
                             if (items[0].ToString() != "")
                             {
@@ -283,11 +315,6 @@ namespace GenerateTranslationsForDashboard
             }
 
             GridData = dt.DefaultView;
-        }
-
-        public void PopulateResources(object obj)
-        {
-            ResultList.Clear();
 
             //Dictionary<string, string> keys = new Dictionary<string, string>();
             List<string> keys = new List<string>();
@@ -299,7 +326,7 @@ namespace GenerateTranslationsForDashboard
             }
 
             // check for duplicate keys
-            var dups = keys.GroupBy(x => x)
+            var dups = keys.GroupBy(x => x, StringComparer.OrdinalIgnoreCase)
                 .Where(g => g.Count() > 1)
                 .Select(y => y.Key)
                 .ToList();
@@ -308,9 +335,32 @@ namespace GenerateTranslationsForDashboard
             {
                 // we got dups
                 DupList = new ObservableCollection<string>(dups);
+                ProcessEnabled = false;
+            }
+            else
+            {
+                ProcessEnabled = true;
+            }
+        }
+
+        public void PopulateResources(object obj)
+        {
+            ResultList.Clear();
+
+
+            if (DupList.Count > 0)
+            {
                 return;
             }
 
+            //Dictionary<string, string> keys = new Dictionary<string, string>();
+            List<string> keys = new List<string>();
+            // iterate through the first column and get the keys
+            for (int i = 0; i < GridData.Table.Rows.Count; i++)
+            {
+                var firstRow = _gridData[i];
+                keys.Add(firstRow[0].ToString());
+            }
 
             // loop through each of the other columns and build a dictionary
             for (int c = 1; c < GridData.Table.Columns.Count; c++)
@@ -326,7 +376,7 @@ namespace GenerateTranslationsForDashboard
                 var element = lang.ElementAt(0);
                 var code = element.Value;
                 // parse out the bracketed code
-                code = code.Substring(code.IndexOf("[")).Replace("[","").Replace("]","");
+                code = code.Substring(code.IndexOf("[")).Replace("[", "").Replace("]", "");
 
                 // Find the corresponding file for this langauge code
                 var langFile = Path.Combine(this._stringsFolderPath, $"Resources.{code}.resx");
