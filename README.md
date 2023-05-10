@@ -28,12 +28,12 @@ If sometime in the future a language is actually sent off for real translation, 
 Add the following lines to each XAML header:
 
 ```
-    xmlns:helpers="clr-namespace:ClearDashboard.Wpf.Helpers"
-    xmlns:resx="clr-namespace:ClearDashboard.Wpf.Strings"
+    xmlns:resx="clr-namespace:ClearDashboard.Wpf.Application.Strings"
+    xmlns:helpers="clr-namespace:ClearDashboard.Wpf.Application.Helpers"
     helpers:Translation.ResourceManager="{x:Static resx:Resources.ResourceManager}"
 ```
 
-For each text element to translate, you pass in the translated text in the following binding manner: `{helpers:Loc Landing_projects}`
+For each text element to translate, you pass in the translated text in the following binding manner: `{helpers:Localization Landing_projects}`
 
 Example:
 ```
@@ -43,11 +43,11 @@ Example:
         FontSize="20"
         Foreground="{StaticResource PrimaryHueDarkBrush}">
         <Run Text="Dashboard " />
-        <Run Text="{helpers:Loc Landing_projects}" />
+        <Run Text="{helpers:Localization Landing_projects}" />
     </TextBlock>
 ```
 
 ## To get the localized string from your code, call the following function
 ```
-    var localizedString = GetLocalizationString.Get(loc, _logger);
+    var localizedString = LocalizationStrings.Get(loc, _logger);
 ```
