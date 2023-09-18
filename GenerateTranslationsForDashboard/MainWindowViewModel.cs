@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.VisualBasic.ApplicationServices;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -411,24 +412,27 @@ namespace GenerateTranslationsForDashboard
                 //    reader.Close();
                 //}
 
-                //Modify resources here...
-                foreach (String key in lang.Keys)
-                {
-                    if (!resourceEntries.ContainsKey(key))
-                    {
-                        String value = lang[key];
-                        if (value == null) value = "";
+                // sort the keys
+                var sorted = lang.OrderBy(word => word.Key);
 
-                        resourceEntries.Add(key, value);
-                    }
-                }
+                ////Modify resources here...
+                //foreach (var key in sorted)
+                //{
+                //    if (!resourceEntries.ContainsKey(key))
+                //    {
+                //        String value =key.Value;
+                //        if (value == null) value = "";
+
+                //        resourceEntries.Add(key, value);
+                //    }
+                //}
 
                 //Write the combined resource file
                 ResXResourceWriter resourceWriter = new ResXResourceWriter(langFile);
 
-                foreach (String key in resourceEntries.Keys)
+                foreach (var key in sorted)
                 {
-                    resourceWriter.AddResource(key, resourceEntries[key]);
+                    resourceWriter.AddResource(key.Key, key.Value);
                 }
                 resourceWriter.Generate();
                 resourceWriter.Close();
