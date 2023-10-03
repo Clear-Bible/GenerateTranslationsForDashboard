@@ -391,7 +391,15 @@ namespace GenerateTranslationsForDashboard
                     break;
                 }
 
-                RemoveAllResources(langFile);
+                if (!RemoveAllResources(langFile))
+                {
+                    ResultList.Add(new Results
+                    {
+                        FilePath = langFile,
+                        Message = "Failed"
+                    });
+                    return;
+                }
 
                 // https://stackoverflow.com/questions/676312/modifying-resx-file-in-c-sharp
                 // Create a ResXResourceReader for the file items.resx.
@@ -451,21 +459,31 @@ namespace GenerateTranslationsForDashboard
         /// Remove all the data from the resource file
         /// </summary>
         /// <param name="langFile"></param>
-        private void RemoveAllResources(string langFile)
+        private bool RemoveAllResources(string langFile)
         {
-            // remove all the data from the file
-            XmlTextReader reader = new XmlTextReader(langFile);
-            reader.Read();
-            XmlDocument doc = new XmlDocument();
-            doc.Load(reader);
-
-            XmlNodeList lstNode = doc.SelectNodes("root/data");
-            foreach (XmlNode node in lstNode)
+            try
             {
-                node.ParentNode.RemoveChild(node);
+                // remove all the data from the file
+                XmlTextReader reader = new XmlTextReader(langFile);
+                reader.Read();
+                XmlDocument doc = new XmlDocument();
+                doc.Load(reader);
+
+                XmlNodeList lstNode = doc.SelectNodes("root/data");
+                foreach (XmlNode node in lstNode)
+                {
+                    node.ParentNode.RemoveChild(node);
+                }
+
+                reader.Close();
+                doc.Save(langFile);
+                return true;
             }
-            reader.Close();
-            doc.Save(langFile);
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Could not parse resource file: {langFile}");
+                return false;
+            }
         }
 
         #endregion
