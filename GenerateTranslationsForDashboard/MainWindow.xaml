@@ -11,6 +11,7 @@
     Width="1200"
     Height="800"
     Background="{DynamicResource MaterialDesignPaper}"
+    Closing="TheWindow_Closing"
     FontFamily="{DynamicResource MaterialDesignFont}"
     TextElement.FontSize="13"
     TextElement.FontWeight="Regular"
@@ -22,6 +23,27 @@
     <Window.DataContext>
         <local:MainWindowViewModel />
     </Window.DataContext>
+
+    <Window.Resources>
+        <Style x:Key="AnimatedLabel" TargetType="FrameworkElement">
+            <Setter Property="Visibility" Value="Hidden" />
+            <Style.Triggers>
+                <Trigger Property="Visibility" Value="Visible">
+                    <Trigger.EnterActions>
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimation
+                                    Storyboard.TargetProperty="Opacity"
+                                    From="1.0"
+                                    To="0.0"
+                                    Duration="0:0:8" />
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </Trigger.EnterActions>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
@@ -61,9 +83,9 @@
             Grid.Column="2"
             Margin="0,2,10,0"
             VerticalAlignment="Top"
-            TextAlignment="Right"
             Foreground="Yellow"
-            Text="{Binding Version}" />
+            Text="{Binding Version}"
+            TextAlignment="Right" />
 
         <StackPanel
             Grid.Row="1"
@@ -83,6 +105,19 @@
                 VerticalAlignment="Center"
                 Text="{Binding StringsFolderPath}" />
         </StackPanel>
+
+        <TextBlock
+            Grid.Row="1"
+            Grid.Column="1"
+            VerticalAlignment="Center"
+            FontSize="16"
+            Foreground="Orange"
+            Style="{StaticResource AnimatedLabel}"
+            Text="New Translation File Detected and Imported"
+            TextWrapping="Wrap"
+            Visibility="{Binding FileChangeLabelVisibility}" />
+
+
         <Button
             Grid.Row="2"
             Width="350"
@@ -92,6 +127,10 @@
             IsEnabled="{Binding Enabled}">
             Generate Data from TSV
         </Button>
+
+
+
+
         <Border
             Grid.Row="3"
             Margin="5"

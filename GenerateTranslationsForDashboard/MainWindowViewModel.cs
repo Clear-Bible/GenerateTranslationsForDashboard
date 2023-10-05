@@ -1,24 +1,30 @@
-﻿using Microsoft.VisualBasic.ApplicationServices;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Data;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Resources.NetStandard;
+using System.Timers;
 using System.Windows;
 using System.Windows.Input;
 using System.Xml;
-using System.Xml.Linq;
 
 namespace GenerateTranslationsForDashboard
 {
     public class MainWindowViewModel : INotifyPropertyChanged
     {
+        #region private props
+
+        private FileSystemWatcher _fileWatcher = new();
+        private Timer _timer = new Timer(8000);
+
+        #endregion
+
+
         #region observable props
 
         private string _version;
@@ -129,6 +135,18 @@ namespace GenerateTranslationsForDashboard
         }
 
 
+        private Visibility _fileChangeLabelVisibility = Visibility.Hidden;
+        public Visibility FileChangeLabelVisibility
+        {
+            get => _fileChangeLabelVisibility;
+            set 
+            { 
+                _fileChangeLabelVisibility = value;
+                NotifyPropertyChanged("FileChangeLabelVisibility");
+            }
+        }
+
+
         #endregion
 
         #region commands
@@ -183,6 +201,7 @@ namespace GenerateTranslationsForDashboard
             }
         }
 
+
         #endregion
 
 
@@ -205,12 +224,82 @@ namespace GenerateTranslationsForDashboard
             SelectStringsDirCommand = new RelayCommand(SetStringsFolder);
             GenerateCommand = new RelayCommand(Generate);
             ProcessCommand = new RelayCommand(PopulateResources);
+
+            // start up a file system watcher
+            _fileWatcher.Filter = "*.*";
+            _fileWatcher.IncludeSubdirectories = false;
+            _fileWatcher.NotifyFilter = NotifyFilters.Attributes |
+                                        NotifyFilters.CreationTime |
+                                        NotifyFilters.DirectoryName |
+                                        NotifyFilters.FileName |
+                                        NotifyFilters.LastAccess |
+                                        NotifyFilters.LastWrite |
+                                        NotifyFilters.Security |
+                                        NotifyFilters.Size;
+
+            _fileWatcher.Created += new FileSystemEventHandler(OnFileCreated);
+            _fileWatcher.Renamed += new RenamedEventHandler(OnFileRenamed);
+
+            if (TSVfile != string.Empty)
+            {
+                var fileInfo = new FileInfo(TSVfile);
+
+                _fileWatcher.EnableRaisingEvents = false;
+                _fileWatcher.Path = fileInfo.DirectoryName;
+                _fileWatcher.EnableRaisingEvents = true;
+            }
+
         }
+
 
 
         #endregion
 
         #region methods
+
+        public void Closing()
+        {
+            _fileWatcher.Created -= new FileSystemEventHandler(OnFileCreated);
+            _fileWatcher = null;
+        }
+
+        public void OnFileCreated(object source, FileSystemEventArgs e)
+        {
+            UpdatedTsvFile(e.FullPath);
+        }
+
+        private void OnFileRenamed(object sender, RenamedEventArgs e)
+        {
+            UpdatedTsvFile(e.FullPath);
+        }
+
+        private void UpdatedTsvFile(string path)
+        {
+            var fileInfo = new FileInfo(path);
+            if (fileInfo.Exists && fileInfo.Name.ToLower().StartsWith("translation") && fileInfo.Extension.ToLower() == ".tsv")
+            {
+                TSVfile = path;
+
+                ThreadContext.InvokeOnUiThread(
+                    delegate ()
+                    {
+                        Generate(null);
+
+                        
+                        _timer.Elapsed += TimerElapsed;
+                        _timer.Enabled = true;
+
+                    });
+
+                FileChangeLabelVisibility = Visibility.Visible;
+            }
+        }
+
+        private void TimerElapsed(object? sender, ElapsedEventArgs e)
+        {
+            _timer.Enabled = false;
+            FileChangeLabelVisibility = Visibility.Hidden;
+        }
 
         private void CloseApp(object obj)
         {
@@ -240,6 +329,13 @@ namespace GenerateTranslationsForDashboard
             if (result == true)
             {
                 TSVfile = dialog.FileName;
+                var fileInfo = new FileInfo(TSVfile);
+
+                _fileWatcher.EnableRaisingEvents = false;
+                _fileWatcher.Path = fileInfo.DirectoryName;
+                _fileWatcher.EnableRaisingEvents = true;
+
+                SaveSettings();
             }
         }
 
@@ -253,6 +349,8 @@ namespace GenerateTranslationsForDashboard
                 if (result == System.Windows.Forms.DialogResult.OK)
                 {
                     StringsFolderPath = dialog.SelectedPath;
+
+                    SaveSettings();
                 }
             }
 
@@ -269,6 +367,7 @@ namespace GenerateTranslationsForDashboard
 
         public void Generate(object obj)
         {
+
             ResultList.Clear();
             DupList.Clear();
 

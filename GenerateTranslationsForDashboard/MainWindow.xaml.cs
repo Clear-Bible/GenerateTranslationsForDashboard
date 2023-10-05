@@ -22,13 +22,20 @@ namespace GenerateTranslationsForDashboard
     /// </summary>
     public partial class MainWindow : Window
     {
+
+        private MainWindowViewModel _vm;
+
         public MainWindow()
         {
             InitializeComponent();
+
+            _vm = this.DataContext as MainWindowViewModel;
         }
 
-        private void Button_Click(object sender, RoutedEventArgs e)
+        private void TheWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
+            // Clean up the file watcher
+            _vm.Closing();
 
         }
     }
